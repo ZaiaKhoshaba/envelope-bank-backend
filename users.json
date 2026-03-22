@@ -1,0 +1,18 @@
+[
+  {
+    "id": "u_1763637355385_348545",
+    "email": "zaia.khoshaba@outlook.com",
+    "name": "Zaia",
+    "passwordHash": "$2b$10$YgcO4YRJ7qfaZ.mKutfAz.2C6AZO0Wigo7zN8XgDQxJMqbXPwzj7y",
+    "createdAt": "2025-11-20T11:15:55.385Z",
+    "updatedAt": "2025-11-20T11:15:55.385Z"
+  },
+  {
+    "id": "u_1771674115229_59021",
+    "email": "test@test.com",
+    "name": "Test",
+    "passwordHash": "$2b$10$tU8zDMhWJ7OUIn6ip4BS1eQjDBOVXwh5S3HdC8tc9pUNUzkbtEH3y",
+    "createdAt": "2026-02-21T11:41:55.227Z",
+    "updatedAt": "2026-02-21T11:41:55.227Z"
+  }
+]
