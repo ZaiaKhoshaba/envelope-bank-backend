@@ -1,2 +1,6 @@
 node_modules/
 .env
+
+# Legacy JSON storage (replaced by MongoDB — safe to delete these files)
+users.json
+push-tokens.json
