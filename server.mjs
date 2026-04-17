@@ -321,24 +321,40 @@ app.post("/fiskil/connect/start", async (req, res) => {
 
 app.post("/auth/register", async (req, res) => {
   try {
-    const { email, password, name } = req.body || {};
-    const trimmedEmail = (email || "").trim().toLowerCase();
-    const trimmedName  = (name  || "").trim();
+    const { email, password, firstName, surname, dateOfBirth, gender,
+            // legacy fallback: older clients send "name" as a single field
+            name } = req.body || {};
+
+    const trimmedEmail     = (email     || "").trim().toLowerCase();
+    const trimmedFirst     = (firstName || name || "").trim();
+    const trimmedSurname   = (surname   || "").trim();
+    const trimmedDob       = (dateOfBirth || "").trim();
+    const trimmedGender    = (gender    || "").trim();
 
     if (!trimmedEmail || !password)
       return res.status(400).json({ error: "email and password are required" });
     if (password.length < 8)
       return res.status(400).json({ error: "password must be at least 8 characters" });
+    if (!trimmedFirst)
+      return res.status(400).json({ error: "first name is required" });
 
     const existing = await findUserByEmail(trimmedEmail);
     if (existing)
       return res.status(409).json({ error: "email already registered" });
 
     const now = new Date().toISOString();
+    const displayName = trimmedSurname
+      ? `${trimmedFirst} ${trimmedSurname}`
+      : trimmedFirst;
+
     const newUser = {
       id:           `u_${Date.now()}_${Math.floor(Math.random() * 1e6)}`,
       email:        trimmedEmail,
-      name:         trimmedName || trimmedEmail,
+      name:         displayName,
+      firstName:    trimmedFirst,
+      surname:      trimmedSurname || null,
+      dateOfBirth:  trimmedDob    || null,
+      gender:       trimmedGender || null,
       passwordHash: bcrypt.hashSync(password, 10),
       createdAt:    now,
       updatedAt:    now,
