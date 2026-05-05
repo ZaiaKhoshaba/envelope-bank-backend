@@ -39,23 +39,43 @@ const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "";
 
 // ── MongoDB connection ────────────────────────────────────────────────────────
 // Single client instance, lazily connected on first use.
+// Includes a ping-based health check so that connections dropped during
+// Render's free-tier sleep are automatically re-established on wake-up.
 
 let _client = null;
 let _db     = null;
 
 async function getDb() {
-  if (_db) return _db;
+  // If we already have a connection, verify it is still alive.
+  // Render's free-tier server sleeps and drops the TCP socket, which leaves
+  // the MongoClient in a "Topology is closed" state. The ping detects this
+  // and forces a fresh connection before any real DB work is attempted.
+  if (_client && _db) {
+    try {
+      await _client.db("admin").command({ ping: 1 });
+      return _db; // connection is healthy — reuse it
+    } catch {
+      console.warn("⚠️  MongoDB connection lost (server woke from sleep?) — reconnecting…");
+      try { await _client.close(); } catch { /* ignore */ }
+      _client = null;
+      _db     = null;
+    }
+  }
+
   if (!MONGODB_URI) {
     throw new Error(
       "MONGODB_URI is not set. Add it to your .env file (local) " +
       "or Render environment variables (production)."
     );
   }
-  if (!_client) {
-    _client = new MongoClient(MONGODB_URI);
-    await _client.connect();
-    console.log("✅ MongoDB connected");
-  }
+
+  _client = new MongoClient(MONGODB_URI, {
+    serverSelectionTimeoutMS: 10_000,  // fail fast if Atlas is unreachable
+    connectTimeoutMS:         10_000,
+    socketTimeoutMS:          45_000,
+  });
+  await _client.connect();
+  console.log("✅ MongoDB connected");
   _db = _client.db("envelopes"); // database name inside Atlas
   return _db;
 }
